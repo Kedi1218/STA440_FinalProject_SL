@@ -242,18 +242,154 @@ print(urban)
 
 
 ```{r}
+# Filter dataset to include only farming and household occupations
+suicide_data <- suicide_data %>%
+  filter(Occupation %in% c("farming", "household"))
+```
+
+
+```{r}
 library(dplyr)
 
-# Filter dataset to include only farming and household occupations
-filtered_data <- suicide_data %>%
-  filter(Occupation %in% c("farming", "household"))
+# Filter for farming and household occupations and remove "unknown" values
+cleaned_data <- suicide_data %>%
+  filter(Occupation %in% c("farming", "household")) %>%   # Keep only farming and household
+  filter(!Education %in% c("unknown"),                   # Remove "unknown" in Education
+         !Died %in% c("unknown"),                        # Remove "unknown" in Died
+         !Hospitalised %in% c("unknown"),                # Remove "unknown" in Hospitalised
+         !method %in% c("unknown"),                      # Remove "unknown" in method
+         !Urban %in% c("unknown"))                       # Remove "unknown" in Urban
 
-# Check the size of the filtered dataset
-nrow(filtered_data)
+# Check the size of the cleaned dataset
+nrow(cleaned_data)
+```
 
-# View the distribution of Died and Hospitalised in the filtered dataset
-table(filtered_data$Died)
-table(filtered_data$Hospitalised)
+```{r}
+# Combine 'Poison' and 'Poison unspecified' into a single category 'Poison'
+cleaned_data <- cleaned_data %>%
+  mutate(method = case_when(
+    method %in% c("Poison", "Poison unspec", "Other poison") ~ "Poison",
+    TRUE ~ method  # Keep other categories unchanged
+  ))
+
+# Check the updated counts for the 'method' column
+table(cleaned_data$method)
 
 ```
 
+
+```{r}
+# Ensure 'Died' is a binary factor with levels "no" and "yes"
+cleaned_data$Died <- factor(cleaned_data$Died, levels = c("no", "yes"))
+
+# Build the logistic regression model
+death_model <- glm(Died ~ Age + Sex + Education + method + Urban + Year + Month, 
+                   data = cleaned_data, 
+                   family = binomial)
+
+# View model summary
+summary(death_model)
+
+# Calculate odds ratios for interpretation
+exp(coef(death_model))
+
+```
+
+```{r}
+# Create a new column 'Season' based on the month
+cleaned_data <- cleaned_data %>%
+  mutate(Season = case_when(
+    Month %in% c(12, 1, 2) ~ "Winter",
+    Month %in% c(3, 4, 5) ~ "Spring",
+    Month %in% c(6, 7, 8) ~ "Summer",
+    Month %in% c(9, 10, 11) ~ "Fall"
+  ))
+
+# Check the counts for each season
+table(cleaned_data$Season)
+
+```
+
+```{r}
+# Update the logistic regression model with 'Season' instead of 'Month'
+death_model_season <- glm(Died ~ Age + Sex + Education + method + Urban + Year + Season, 
+                          data = cleaned_data, 
+                          family = binomial)
+
+# View the model summary
+summary(death_model_season)
+
+# Calculate odds ratios for interpretation
+exp(coef(death_model_season))
+```
+
+```{r}
+# Convert Year into a categorical variable
+cleaned_data$Year <- as.factor(cleaned_data$Year)
+
+# Check the levels to confirm
+levels(cleaned_data$Year)
+```
+
+```{r}
+# Logistic regression with Year as a categorical variable
+death_model_categorical <- glm(Died ~ Age + Sex + Education + method + Urban + Season + Year, 
+                               data = cleaned_data, 
+                               family = binomial)
+
+# View model summary
+summary(death_model_categorical)
+
+# Calculate odds ratios
+exp(coef(death_model_categorical))
+
+```
+
+
+```{r}
+# Plot Age and Sex interaction
+ggplot(cleaned_data, aes(x = Age, y = as.numeric(Died == "yes"), color = Sex)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Interaction Between Age and Sex on Death Outcome",
+    x = "Age",
+    y = "Probability of Death"
+  )
+
+
+```
+
+```{r}
+
+# Create a bar plot showing proportions
+ggplot(cleaned_data, aes(x = Education, fill = Died)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ Urban) +
+  labs(
+    title = "Proportion of Deaths by Education Level and Urban/Rural",
+    x = "Education Level",
+    y = "Proportion",
+    fill = "Died"
+  )
+
+```
+
+```{r}
+# Add Education and Urban interaction to the model
+interaction_model <- glm(Died ~ Age + Education + Urban + method + Season + Year * Sex, 
+                         data = cleaned_data, 
+                         family = binomial)
+
+# View the model summary
+summary(interaction_model)
+
+```
+
+```{r}
+library(pROC)
+roc_curve <- roc(cleaned_data$Died, predict(death_model_categorical, type = "response"))
+plot(roc_curve)
+auc(roc_curve)
+
+
+```
