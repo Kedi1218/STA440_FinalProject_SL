@@ -20,6 +20,11 @@ library(nnet)
 library(car)
 library(patchwork)
 library(cowplot)
+library(reshape2)
+library(corrplot)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
 ```
 
 ```{r}
@@ -160,8 +165,6 @@ ggplot(suicide_data, aes(x = as.factor(Year), fill = Died)) +
 ```
 
 ```{r}
-library(ggplot2)
-
 ggplot(suicide_data, aes(x = as.factor(Month), fill = Died)) +
   geom_bar(position = "fill") +
   facet_wrap(~ Year) +
@@ -439,7 +442,7 @@ exp(coef(multinom_model))
 ```
 
 ```{r}
-# fixed - fit three level 
+# fixed - fit three level  - this is the wrong one not to use 
 cleaned_data$Outcome <- case_when(
   cleaned_data$Died == "yes" ~ "High_Fatality",                   # Dead, regardless of hospitalization
   cleaned_data$Died == "no" & cleaned_data$Hospitalised == "yes" ~ "Medium_Fatality",  # Not dead but hospitalized
@@ -457,7 +460,7 @@ table(cleaned_data$Outcome)
 ```{r}
 #only fit the two level - medium and high?
 cleaned_data$Outcome <- case_when(
-  cleaned_data$Died == "yes" ~ "High_Fatality",                   # Dead (high-fatality)
+  cleaned_data$Died == "yes" ~ "High_Fatality",     # Dead (high-fatality)
   cleaned_data$Died == "no" & cleaned_data$Hospitalised == "yes" ~ "Medium_Fatality" # Survived and hospitalized
 )
 
@@ -598,5 +601,235 @@ combined_plot <- (plot1 + theme(legend.position = "bottom")) | plot2 /
 
 # Display the combined plot
 combined_plot
+
+```
+```{r}
+
+# Custom blue palette for Outcome levels
+blue_palette <- c("High_Fatality" = "#08306B", "Medium_Fatality" = "#4292C6")
+
+# Theme adjustments for readability
+custom_theme <- theme_minimal(base_size = 11) + 
+  theme(
+    plot.title = element_text(size = 11, hjust = 0.5),
+    axis.title = element_text(size = 9),
+    axis.text = element_text(size = 6),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
+
+# Plot 1: Age vs Outcome
+plot1 <- ggplot(cleaned_data, aes(x = Age, fill = Outcome)) +
+  geom_histogram(bins = 20, position = "stack", color = "white") +
+  facet_wrap(~ Outcome, scales = "free_y") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Age Distribution by Outcome", x = "Age", y = "Count", fill = "Outcome") +
+  custom_theme
+
+# Plot 2: Gender vs Outcome
+plot2 <- ggplot(cleaned_data, aes(x = Sex, fill = Outcome)) +
+  geom_bar(position = "fill", color = "white") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Gender Proportion by Outcome", x = "Gender", y = "Proportion", fill = "Outcome") +
+  custom_theme
+
+# Plot 3: Education Level vs Outcome
+plot3 <- ggplot(cleaned_data, aes(x = Education, fill = Outcome)) +
+  geom_bar(position = "fill", color = "white") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Education Level by Outcome", x = "Education Level", y = "Proportion", fill = "Outcome") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  custom_theme
+
+# Plot 4: Suicide Methods vs Outcome
+plot4 <- ggplot(cleaned_data, aes(x = method, fill = Outcome)) +
+  geom_bar(position = "dodge", color = "white") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Suicide Methods by Outcome", x = "Method", y = "Count", fill = "Outcome") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  custom_theme
+
+# Plot 5: Year vs Outcome
+plot5 <- ggplot(cleaned_data, aes(x = as.factor(Year), fill = Outcome)) +
+  geom_bar(position = "fill", color = "white") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Outcome Results by Year", x = "Year", y = "Proportion", fill = "Outcome") +
+  custom_theme
+
+# Plot 6: Season vs Outcome
+plot6 <- ggplot(cleaned_data, aes(x = Season, fill = Outcome)) +
+  geom_bar(position = "fill", color = "white") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Outcome Results by Season", x = "Season", y = "Proportion", fill = "Outcome") +
+  custom_theme
+
+# Combine all plots into a 2x3 grid layout with shared legend
+combined_plot <- (plot1 | plot2 | plot3) / (plot4 | plot5 | plot6) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
+
+# Display the combined plot
+combined_plot
+
+```
+
+```{r}
+
+linear_model <- lm(as.numeric(Outcome) ~ Age + Sex + Education + method + Year + Season, data = cleaned_data)
+
+vif_values <- vif(linear_model)
+print(vif_values)
+
+
+```
+
+
+```{r}
+
+## final final model!
+
+ 
+final_model1 <- glm(Outcome ~ Age + Sex + Education + method + Year + Season, 
+                    data = cleaned_data, 
+                    family = binomial)
+
+summary(final_model1)
+
+
+exp(coef(final_model1))
+
+
+```
+
+
+
+
+```{r}
+
+# Coefficient Table Data
+results_table <- data.frame(
+  Predictor = c("Intercept", "Age", "Sex (male)", "Education (Primary)", 
+                "Education (Secondary)", "Education (Tertiary)",
+                "Method (Drowning)", "Method (Hanging)", "Method (Jumping)",
+                "Method (Pesticide)", "Method (Poison)", "Method (Unspecified)",
+                "Year (2010)", "Year (2011)", "Season (Spring)", 
+                "Season (Summer)", "Season (Winter)"),
+  Estimate = c(1.123417, -0.017616, -0.318367, 0.822793, 2.481094, 
+               0.865654, -17.578842, -4.133257, -3.737283, 
+               -0.984085, 1.389876, 1.684696, -0.356449, -0.628994, 
+               -0.421115, 0.058410, -0.402991),
+  Std_Error = c(0.607402, 0.003917, 0.116802, 0.180521, 0.191751, 
+                1.084484, 416.613360, 0.624076, 1.228425, 
+                0.540250, 0.609575, 0.839992, 0.141794, 0.146920, 
+                0.164219, 0.156023, 0.174818),
+  Z_value = c(1.850, -4.498, -2.726, 4.558, 12.939, -0.798, 
+              -0.042, -6.623, -3.042, -1.822, 2.280, 2.006, 
+              -2.514, -4.281, -2.564, 0.374, -2.305),
+  P_value = c(0.06438, 6.87e-06, 0.00642, 5.17e-06, 2e-16, 
+              0.42474, 0.96634, 3.52e-11, 0.00235, 
+              0.06853, 0.02260, 0.04490, 0.01194, 1.86e-05, 
+              0.01034, 0.70813, 0.02116)
+)
+
+# Professional Table with kableExtra
+results_table %>%
+  kable("html", caption = "Binary Logistic Regression Results", align = "lcccc") %>%
+  kable_styling(full_width = F, font_size = 12, position = "center", bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2:5, width = "2cm") %>%
+  row_spec(0, bold = TRUE, background = "#D3D3D3") %>%
+  scroll_box(height = "400px")
+
+```
+
+
+```{r}
+# EDA - educational and outcome ?
+cleaned_data <- data.frame(
+  Outcome = c(rep("High_Fatality", 100), rep("Medium_Fatality", 50)),
+  Education = rep(c("Primary", "Secondary", "Illiterate", "Tertiary", "Primary"), 30)
+)
+
+# Create the plot
+ggplot(cleaned_data, aes(x = Education, fill = Outcome)) +
+  geom_bar(position = "dodge") +
+  scale_fill_brewer(palette = "Blues", name = "Outcome") +
+  labs(
+    title = "Distribution of Fatality Outcome by Education",
+    x = "Education Level",
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+
+
+```{r}
+
+# new eda proportional ? 
+cleaned_data <- data.frame(
+  Outcome = c(rep("High_Fatality", 100), rep("Medium_Fatality", 50)),
+  Education = rep(c("Primary", "Secondary", "Illiterate", "Tertiary", "Primary"), 30)
+)
+
+
+proportion_data <- cleaned_data %>%
+  group_by(Education, Outcome) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Education) %>%
+  mutate(Proportion = Count / sum(Count))
+
+
+ggplot(proportion_data, aes(x = Education, y = Proportion, fill = Outcome)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_brewer(palette = "Blues", name = "Outcome") +
+  labs(
+    title = "Proportional Distribution of Fatality Outcome by Education",
+    x = "Education Level",
+    y = "Proportion"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+
+```{r}
+# Example dataset
+cleaned_data <- data.frame(
+  Hospitalised = rep(c("Yes", "No"), 150),
+  Education = rep(c("Primary", "Secondary", "Illiterate", "Tertiary"), 75),
+  Died = rep(c("Yes", "No"), 150)
+)
+
+# Calculate proportions
+proportion_data <- cleaned_data %>%
+  group_by(Education, Hospitalised, Died) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Education, Hospitalised) %>%
+  mutate(Proportion = Count / sum(Count))
+
+# Create the plot
+ggplot(proportion_data, aes(x = Education, y = Proportion, fill = Died)) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_wrap(~ Hospitalised, scales = "free_y") +
+  scale_fill_brewer(palette = "Blues", name = "Died") +
+  labs(
+    title = "Proportional Distribution of Death by Education and Hospitalisation",
+    x = "Education Level",
+    y = "Proportion"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
 
 ```
