@@ -10,3 +10,7 @@ Some concerns about limitation?
 1. filter unknown data as missing data?
 2. only 2k data - cannot represent shandong? okay to generalize to other city? 
 3. okay to only focus on farmers? what about education and urban factors
+
+4. hard to say which method is high fatality one - farmers + pesticide / building- jumping 
+
+5. ? 

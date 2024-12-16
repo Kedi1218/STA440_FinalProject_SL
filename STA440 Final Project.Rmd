@@ -11,42 +11,45 @@ library(readr)
 suicide_data <- read_csv("SuicideChina.csv")
 
 ```
-```{r}
-# View first few rows
-head(suicide_data)
 
-# Check data structure
+```{r}
+library(ggplot2)
+library(dplyr)
+library(pROC)
+library(nnet)
+library(car)
+library(patchwork)
+library(cowplot)
+```
+
+```{r}
+
+head(suicide_data)
 str(suicide_data)
 
-# Summary statistics
 summary(suicide_data)
 
 ```
 
-Let's do some EDA first 
-
+Let's do some EDA first
 
 ```{r}
-# Frequency of 'Died'
+
 table(suicide_data$Died)
 
-# Frequency of 'Sex'
 table(suicide_data$Sex)
 
-# Frequency of 'Urban'
+
 table(suicide_data$Urban)
 
-# Frequency of 'Method'
 table(suicide_data$method)
 
 ```
 
 ```{r}
-# Summary of Age
+
 summary(suicide_data$Age)
 
-install.packages("ggplot2")
-library(ggplot2)
 
 
 ggplot(suicide_data, aes(x = Age)) +
@@ -99,7 +102,6 @@ ggplot(suicide_data, aes(x = Education, fill = Died)) +
 
 ```
 
-
 ```{r}
 
 ```
@@ -118,6 +120,7 @@ ggplot(suicide_data, aes(x = Age, fill = Died)) +
 
 
 ```
+
 ```{r}
 ggplot(suicide_data, aes(x = Age, fill = Died)) +
   geom_density(alpha = 0.5) +
@@ -129,8 +132,8 @@ ggplot(suicide_data, aes(x = Age, fill = Died)) +
     fill = "Died"
   )
 ```
+
 ```{r}
-library(ggplot2)
 
 ggplot(suicide_data, aes(x = as.factor(Year), fill = Died)) +
   geom_bar(position = "fill") +
@@ -178,7 +181,7 @@ ggplot(suicide_data, aes(x = as.factor(Month), fill = Died)) +
 # Convert 'Died' to a factor variable
 suicide_data$Died <- factor(suicide_data$Died, levels = c("no", "yes"))
 
-# Fit logistic regression model
+
 logistic_model <- glm(Died ~ Age + Sex + Education + Occupation + method + Urban + Year + Month, 
                       data = suicide_data, 
                       family = binomial)
@@ -196,8 +199,8 @@ exp(coef(logistic_model))
 occupation_counts <- table(suicide_data$Occupation)
 print(occupation_counts)
 ```
+
 ```{r}
-library(ggplot2)
 
 # Create a stacked bar plot for Died and Hospitalised by Education
 ggplot(suicide_data, aes(x = Education, fill = interaction(Died, Hospitalised))) +
@@ -240,16 +243,13 @@ urban <- table(suicide_data$Urban)
 print(urban)
 ```
 
-
 ```{r}
 # Filter dataset to include only farming and household occupations
 suicide_data <- suicide_data %>%
   filter(Occupation %in% c("farming", "household"))
 ```
 
-
 ```{r}
-library(dplyr)
 
 # Filter for farming and household occupations and remove "unknown" values
 cleaned_data <- suicide_data %>%
@@ -265,7 +265,7 @@ nrow(cleaned_data)
 ```
 
 ```{r}
-# Combine 'Poison' and 'Poison unspecified' into a single category 'Poison'
+
 cleaned_data <- cleaned_data %>%
   mutate(method = case_when(
     method %in% c("Poison", "Poison unspec", "Other poison") ~ "Poison",
@@ -276,7 +276,6 @@ cleaned_data <- cleaned_data %>%
 table(cleaned_data$method)
 
 ```
-
 
 ```{r}
 # Ensure 'Died' is a binary factor with levels "no" and "yes"
@@ -345,7 +344,6 @@ exp(coef(death_model_categorical))
 
 ```
 
-
 ```{r}
 # Plot Age and Sex interaction
 ggplot(cleaned_data, aes(x = Age, y = as.numeric(Died == "yes"), color = Sex)) +
@@ -376,20 +374,229 @@ ggplot(cleaned_data, aes(x = Education, fill = Died)) +
 
 ```{r}
 # Add Education and Urban interaction to the model
-interaction_model <- glm(Died ~ Age + Education + Urban + method + Season + Year * Sex, 
+final_model <- glm(Died ~ Age + Education + method + Season + Year + Sex, 
                          data = cleaned_data, 
                          family = binomial)
 
 # View the model summary
-summary(interaction_model)
+summary(final_model)
 
 ```
 
 ```{r}
-library(pROC)
 roc_curve <- roc(cleaned_data$Died, predict(death_model_categorical, type = "response"))
 plot(roc_curve)
 auc(roc_curve)
 
+
+```
+
+```{r}
+
+final_model <- glm(Died ~ Hospitalised + method + Year + Education + Season + Sex + Age, 
+                         data = cleaned_data, 
+                         family = binomial)
+
+
+summary(final_model)
+
+
+```
+
+```{r}
+model_no_hospital <- glm(Died ~ method + Year + Education + Season + Sex + Age, 
+                         data = cleaned_data, family = binomial)
+
+# Fit model with "Hospitalised"
+model_with_hospital <- glm(Died ~ Hospitalised + method + Year + Education + Season + Sex + Age, 
+                           data = cleaned_data, family = binomial)
+
+
+vif(model_with_hospital)
+
+```
+
+```{r}
+
+# To create a combined outcome variable
+cleaned_data$Outcome <- case_when(
+  cleaned_data$Died == "yes" ~ "Died",
+  cleaned_data$Hospitalised == "yes" ~ "Hospitalised",
+  TRUE ~ "Not_Hospitalised"
+)
+
+
+cleaned_data$Outcome <- factor(cleaned_data$Outcome, levels = c("Died", "Hospitalised", "Not_Hospitalised"))
+
+# Fit multinomial logistic regression
+multinom_model <- multinom(Outcome ~ Age + Sex + Education + method + Urban + Year + Season, 
+                           data = cleaned_data)
+
+summary(multinom_model)
+exp(coef(multinom_model))
+
+
+```
+
+```{r}
+# fixed - fit three level 
+cleaned_data$Outcome <- case_when(
+  cleaned_data$Died == "yes" ~ "High_Fatality",                   # Dead, regardless of hospitalization
+  cleaned_data$Died == "no" & cleaned_data$Hospitalised == "yes" ~ "Medium_Fatality",  # Not dead but hospitalized
+  cleaned_data$Died == "no" & cleaned_data$Hospitalised == "no" ~ "Low_Fatality"      # Not dead and not hospitalized
+)
+
+cleaned_data$Outcome <- factor(cleaned_data$Outcome, 
+                               levels = c("High_Fatality", "Medium_Fatality", "Low_Fatality"))
+
+
+table(cleaned_data$Outcome)
+
+```
+
+```{r}
+#only fit the two level - medium and high?
+cleaned_data$Outcome <- case_when(
+  cleaned_data$Died == "yes" ~ "High_Fatality",                   # Dead (high-fatality)
+  cleaned_data$Died == "no" & cleaned_data$Hospitalised == "yes" ~ "Medium_Fatality" # Survived and hospitalized
+)
+
+
+cleaned_data$Outcome <- factor(cleaned_data$Outcome, 
+                               levels = c("High_Fatality", "Medium_Fatality"))
+
+table(cleaned_data$Outcome)
+```
+
+```{r}
+
+# urban? + death
+ggplot(cleaned_data, aes(x = Urban, fill = Died)) +
+  geom_bar(position = "fill") +
+  labs(
+    title = "Proportion of Deaths by Urban/Rural Location",
+    x = "Location (Urban/Rural)",
+    y = "Proportion",
+    fill = "Died Status"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# % Urban/Rural
+proportions <- cleaned_data %>%
+  group_by(Urban, Died) %>%
+  summarise(Count = n()) %>%
+  mutate(Proportion = Count / sum(Count)) %>%
+  arrange(Urban, Died)
+
+print(proportions)
+
+
+```
+
+```{r}
+# final model? 
+binary_model <- glm(Outcome ~ Age + Sex + Education + method + Year + Season, 
+                    data = cleaned_data, 
+                    family = binomial)
+
+summary(binary_model)
+
+# Convert coefficients to odds ratios
+exp(coef(binary_model))
+
+```
+
+```{r}
+# new attempt - ? 
+cleaned_data$Outcome <- case_when(
+  cleaned_data$Died == "yes" & cleaned_data$Hospitalised == "yes" ~ "Died-Hospital",
+  cleaned_data$Died == "no" & cleaned_data$Hospitalised == "yes" ~ "Survived",
+  cleaned_data$Died == "yes" & cleaned_data$Hospitalised == "no" ~ "ImmediateDeath"
+)
+
+
+cleaned_data$Outcome <- factor(cleaned_data$Outcome, 
+                               levels = c("Died-Hospital", "Survived", "ImmediateDeath"))
+
+table(cleaned_data$Outcome)
+
+
+```
+
+```{r}
+# final fianl model ? new combined model?
+
+
+#?multinomial logistic regression model
+
+multinom_model <- multinom(Outcome ~ Age + Sex + Education + method + Urban + Year + Season, 
+                           data = cleaned_data)
+
+summary(multinom_model)
+
+## cannot use this model this is wrong.
+```
+
+```{r}
+## Need to be fixed
+z_values <- summary(multinom_model)$coefficients / summary(multinom_model)$standard.errors
+p_values <- 2 * (1 - pnorm(abs(z_values)))
+p_values
+## oops something wrong...
+```
+
+```{r}
+# Custom blue palette
+blue_palette <- c("#08306B", "#4292C6", "#9ECAE1")
+
+# Base theme for all plots
+base_theme <- theme_minimal(base_size = 10) + 
+  theme(
+    legend.position = "none",  # Suppress legends in individual plots
+    plot.title = element_text(size = 10),
+    axis.text = element_text(size = 8),
+    axis.title = element_text(size = 8)
+  )
+
+# Plot 1: Deaths by Gender
+plot1 <- ggplot(cleaned_data, aes(x = Sex, fill = Died)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Deaths by Gender", x = "Gender", y = "Proportion") +
+  base_theme
+
+# Plot 2: Death by Age Distribution
+plot2 <- ggplot(cleaned_data, aes(x = Age, fill = Died)) +
+  geom_histogram(binwidth = 5, color = "white", position = "stack") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Death by Age Distribution", x = "Age", y = "Count") +
+  base_theme
+
+# Plot 3: Deaths by Year
+plot3 <- ggplot(cleaned_data, aes(x = factor(Year), fill = Died)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Deaths by Year", x = "Year", y = "Proportion") +
+  base_theme
+
+# Plot 4: Death by Suicide Methods
+plot4 <- ggplot(cleaned_data, aes(x = method, fill = Died)) +
+  geom_bar() +
+  scale_fill_manual(values = blue_palette) +
+  labs(title = "Death by Suicide Methods", x = "Method", y = "Count") +
+  base_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Combine the plots into a 2x2 grid with a single shared legend
+combined_plot <- (plot1 + theme(legend.position = "bottom")) | plot2 / 
+                 plot3 | plot4 + 
+                 plot_layout(guides = "collect") &
+                 theme(legend.position = "bottom")
+
+# Display the combined plot
+combined_plot
 
 ```

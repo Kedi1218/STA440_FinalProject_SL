@@ -1,0 +1,14 @@
+---
+title: "Methodology-WriteUp"
+author: "Sophia Li"
+date: "2024-12-16"
+output: pdf_document
+---
+
+## Variable Selection
+
+
+```{r}
+
+
+```
