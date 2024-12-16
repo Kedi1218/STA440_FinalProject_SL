@@ -5,6 +5,14 @@ date: "2024-12-16"
 output: pdf_document
 ---
 
+# Discussion
+
+The results section does not include a discussion regarding the odds of educational levels on the combined variable. Based on the model, the interpretation would be as follows: Individuals with primary education have 2.28 times higher odds of high fatality compared to those with no formal education (exp(0.8227)). For secondary education, the odds ratio is 11.94 (exp(2.4811)), indicating a substantial increase in the likelihood of high fatality compared to the baseline group. Conversely, tertiary education does not show a significant impact on fatality outcomes (p > 0.05). However, this interpretation may be incorrect due to a possible interaction between education level and the hospitalized variable. 
+
+The proportional bar plot indicates that individuals with tertiary education are more likely to receive treatment compared to all other groups, and those with secondary education are also more likely to be hospitalized. In contrast, patients with no formal education or primary education are the least likely to receive hospital treatment after a suicide attempt. Consequently, when the hospitalized variable is included as a response variable in the binary logistic regression model, it causes distorted coefficients due to multicollinearity. While the graph highlights the importance of education, the table results from the final model may be somewhat misleading. Therefore, I believe it is inappropriate to interpret the impact of education levels as described earlier, and I have chosen not to discuss their effects on the outcome in detail. 
+
+For the missing data, I directky remove/drop unknown or unspecified data among our predictors. However, the missing data among occupation could be Missing At Random(MAR) since there are around 160 unknown occupation which I believe is due to the geographic features. The shandong province itself is mainly for agricultural, and the opening for any tourism/service/sales workers is limited and the education resources there is extremely competitive and short for people to get educated. Therefore, we can see most of the people are farmers and household who have only primary or even iliterate eudcation and the unkown occupations could be due to missing at random. 
+
 Some concerns about limitation?
 
 1. filter unknown data as missing data?

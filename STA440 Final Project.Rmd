@@ -833,3 +833,34 @@ ggplot(proportion_data, aes(x = Education, y = Proportion, fill = Died)) +
 
 
 ```
+
+```{r}
+# Example dataset
+set.seed(123)
+cleaned_data <- data.frame(
+  Hospitalised = sample(c("Yes", "No"), 200, replace = TRUE),
+  Education = sample(c("Primary", "Secondary", "Illiterate", "Tertiary"), 200, replace = TRUE)
+)
+
+# Calculate proportions
+proportion_data <- cleaned_data %>%
+  group_by(Education, Hospitalised) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Education) %>%
+  mutate(Proportion = Count / sum(Count))
+
+# Create a proportional bar plot
+ggplot(proportion_data, aes(x = Education, y = Proportion, fill = Hospitalised)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_brewer(palette = "Blues", name = "Hospitalised") +
+  labs(
+    title = "Proportional Distribution of Hospitalisation by Education Level",
+    x = "Education Level",
+    y = "Proportion"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+```
