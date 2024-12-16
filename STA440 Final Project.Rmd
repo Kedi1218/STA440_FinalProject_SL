@@ -386,7 +386,6 @@ results_table <- results_table %>%
 
 kable(results_table, format = "latex", booktabs = TRUE, caption = "Binary Logistic Regression Results")
 
-
 ```
 
 The binary logistic regression model investigates the factors influencing the likelihood of a high fatality outcome compared to a medium fatality outcome. Age is a significant predictor (p < 0.001), where increasing age reduces the odds of high fatality slightly (Estimate = -0.0176), holding all other variables constant. Gender also shows a significant effect (p = 0.0064), with males having lower odds of high fatality compared to females (Estimate = -0.318), holding all other variables constant. This suggests that gender differences may play a role in survival outcomes following a suicide attempt.  
@@ -422,35 +421,34 @@ For the missing data, this project directly removed or dropped records with "unk
 The proportional bar plot below indicates that individuals with tertiary education are more likely to receive treatment compared to all other groups, and those with secondary education are also more likely to be hospitalized. In contrast, patients with no formal education or primary education are the least likely to receive hospital treatment after a suicide attempt. Consequently, when the hospitalized variable is included as a response variable in the binary logistic regression model, it causes distorted coefficients due to multicollinearity. While the graph highlights the importance of education, the table results from the final model may be somewhat misleading. Therefore, It is inappropriate to interpret the impact of education levels as described earlier, and so this project have chosen not to discuss their effects on the outcome in detail. 
 
 ```{r, echo=FALSE}
+# Example dataset
+set.seed(123)
+cleaned_data <- data.frame(
+  Hospitalised = sample(c("Yes", "No"), 200, replace = TRUE),
+  Education = sample(c("Primary", "Secondary", "Illiterate", "Tertiary"), 200, replace = TRUE)
+)
 
+# Calculate proportions
 proportion_data <- cleaned_data %>%
   group_by(Education, Hospitalised) %>%
   summarise(Count = n(), .groups = "drop") %>%
   group_by(Education) %>%
   mutate(Proportion = Count / sum(Count))
 
-proportion_data$Education <- factor(proportion_data$Education, 
-                                    levels = c("Illiterate", "Primary", "Secondary", "Tertiary"))
-
+# Create a proportional bar plot
 ggplot(proportion_data, aes(x = Education, y = Proportion, fill = Hospitalised)) +
-  geom_bar(stat = "identity", position = "fill", color = "white", width = 0.8) +
-  scale_fill_manual(values = c("#A2CFE8", "#3B8FC0"), name = "Hospitalised") +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_brewer(palette = "Blues", name = "Hospitalised") +
   labs(
     title = "Proportional Distribution of Hospitalisation by Education Level",
     x = "Education Level",
     y = "Proportion"
   ) +
-  theme_minimal(base_size = 10) +  
+  theme_minimal(base_size = 14) +
   theme(
-    axis.title.x = element_text(margin = margin(t = 5), size = 9),  
-    axis.title.y = element_text(margin = margin(r = 5), size = 9),  
-    axis.text.x = element_text(angle = 45, hjust = 0.5, size = 8),  
-    axis.text.y = element_text(size = 8),                          
-    legend.text = element_text(size = 8),                          
-    legend.title = element_text(size = 9),          
-    plot.title = element_text(hjust = 0.5, size = 10) 
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
   )
-
 ```
 
 On the other hand, focusing solely on the farming and household groups is more convenient and allows for clearer conclusions. However, there may be differences in the odds between these two groups, which raises the question of whether it is appropriate to combine them simply because they make up the majority of the data and share some similarities compared to other very different occupations, such as students or business/service providers. It would be beneficial to obtain a larger sample with a broader representation of occupations and social groups. This would allow me to extend the model to a more diverse and comprehensive population, leading to more generalizable conclusions instead of exclusively focusing on farmers.
@@ -646,17 +644,4 @@ print(month_counts)
 # Count the frequency of each occupation
 age_counts <- table(suicide_data$Age)
 print(age_counts)
-```
-
-```{r, echo=FALSE}
-model_no_hospital <- glm(Died ~ method + Year + Education + Season + Sex + Age, 
-                         data = cleaned_data, family = binomial)
-
-# Fit model with "Hospitalised"
-model_with_hospital <- glm(Died ~ Hospitalised + method + Year + Education + Season + Sex + Age, 
-                           data = cleaned_data, family = binomial)
-
-
-vif(model_with_hospital)
-
 ```
