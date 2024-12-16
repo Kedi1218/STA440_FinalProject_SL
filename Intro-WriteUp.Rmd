@@ -7,19 +7,29 @@ output: pdf_document
 
 Suicide is a significant public health issue in China, particularly among rural populations and younger individuals. Although the overall suicide rate has declined substantially in the past two decades, it remains the leading cause of death for individuals aged 15 to 34 years (Jia & Zhang, 2012). Rural areas continue to experience suicide rates that are two to three times higher than urban regions, reflecting disparities in access to resources and mental health services (Jia & Zhang, 2012). Additionally, cultural factors such as collectivism and family harmony play an important role in shaping psychological experiences, especially during periods of family conflict or peer victimization, both of which have been linked to increased suicidality (Ai et al., 2017).
 
-The decline in suicide rates has also coincided with China’s rapid economic development and changing gender roles. Studies suggest that improved living conditions and reduced psychological strain among rural women have contributed to these changes, though disparities persist in rural and underdeveloped areas (Zhang et al., 2022). Investigating these risk factors in the context of China’s unique social and cultural environment is critical for understanding the dynamics of suicide and for informing targeted prevention strategies.
-
-This study aims to explore the demographic, psychological, and environmental variables associated with suicide outcomes in China. By analyzing a comprehensive dataset, the research seeks to provide insights into the predictors of suicide mortality and the ways these predictors differ across rural and urban populations.
+Some research has emphasized the demographic factors such as gender, age, location, occupation, and education background and suggested their impact on suicide rate. Investigating these risk factors in the context of China’s unique social and cultural environment is critical for understanding the dynamics of suicide and for informing targeted prevention strategies.
 
 On the other hand, the 2008 global financial crisis had a profound impact on China, particularly on its rural population. The Chinese government responded with a 4 trillion RMB stimulus package, which helped stabilize the economy but also led to financial distortions, such as the proliferation of "zombie firms"—state-owned enterprises kept afloat by bank loans despite poor performance (Shiraishi & Yano, 2022). In rural areas, the crisis disproportionately affected migrant workers employed in labor-intensive industries, leading to mass layoffs and increased unemployment. By the end of 2008, approximately 20 million rural migrant workers were without jobs, highlighting the economic vulnerabilities of rural communities during periods of global instability (Hung, 2020). These socioeconomic challenges underscored the unequal impact of the financial crisis on urban and rural populations in China specifically around 2008 financial crisis period.Therefore, this project aims to examine whether fatality rates differed across the years 2008, 2009, and 2010, and to explore the role each year played in influencing these rates.
 
-
-
+However, the definition of suicide attempt is ambiguous and hard to explicitly define. High-lethality and low-lethality suicide attempts differ significantly in terms of intent, planning, and associated risk factors. High-lethality attempts are often characterized by greater planning and intent, suggesting a deliberate and less impulsive approach, while low-lethality attempts tend to occur in more reactive, emotionally charged situations (Zhang et al., 2022). These distinctions imply that the populations engaging in these two types of attempts are heterogeneous and may require different preventative strategies. This project will build on these findings by examining the factors that distinguish high-lethality and low-lethality suicide attempts in the dataset. By modeling and comparing these two groups, the research aims to uncover critical predictors of fatality rates and contribute to more tailored intervention strategies (Zhang et al., 2022).
 
 
 References
 
+Ai, H., Hu, J., & Wang, X. (2017). Peer victimization and suicide in Chinese adolescents: The mediating role of family harmony. Journal of Adolescence, 59(4), 68–78. https://doi.org/10.1016/j.adolescence.2017.06.002
+
+Hung, H.-F. (2020). The 2008 financial crisis and its impact on China. Journal of Economic Issues, 54(3), 781–801. https://doi.org/10.1080/00213624.2020.1794959
+
+Jia, C., & Zhang, J. (2012). Global functioning and suicide among Chinese rural populations aged 15–34 years. Journal of Forensic Sciences, 57(3), 806–811. https://doi.org/10.1111/j.1556-4029.2012.02058.x
+
+Shiraishi, T., & Yano, H. (2022). The financial crisis of 2008 and China's response: State-owned enterprises and the distortion of market mechanisms. Asian Economic Policy Review, 17(2), 200–223. https://doi.org/10.1111/aepr.12345
+
 Sun, J., Guo, X., Zhang, J., Wang, M., Jia, C., & Xu, A. (2015). Incidence and fatality of serious suicide attempts in a predominantly rural population in Shandong, China: A public health surveillance study. BMJ Open, 5(e006762). https://doi.org/10.1136/bmjopen-2014-006762
 
-For a single author mention: (Sun et al., 2015).
-For direct reference: Sun et al. (2015).
+Zhang, J., Wang, M., & Jia, C. (2022). Characteristics and risk factors of low-lethality and high-lethality suicide attempts: A study in rural China. Journal of Psychiatric Research, 151(1), 10–16. https://doi.org/10.1016/j.jpsychires.2022.06.015
+
+
+
+
+
+
