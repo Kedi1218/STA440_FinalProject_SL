@@ -173,3 +173,87 @@ ggplot(suicide_data, aes(x = as.factor(Month), fill = Died)) +
                               "9" = "Sep", "10" = "Oct", "11" = "Nov", "12" = "Dec"))
 
 ```
+
+```{r}
+# Convert 'Died' to a factor variable
+suicide_data$Died <- factor(suicide_data$Died, levels = c("no", "yes"))
+
+# Fit logistic regression model
+logistic_model <- glm(Died ~ Age + Sex + Education + Occupation + method + Urban + Year + Month, 
+                      data = suicide_data, 
+                      family = binomial)
+
+# Summary of the model
+summary(logistic_model)
+
+# Odds Ratios
+exp(coef(logistic_model))
+
+```
+
+```{r}
+# Count the frequency of each occupation
+occupation_counts <- table(suicide_data$Occupation)
+print(occupation_counts)
+```
+```{r}
+library(ggplot2)
+
+# Create a stacked bar plot for Died and Hospitalised by Education
+ggplot(suicide_data, aes(x = Education, fill = interaction(Died, Hospitalised))) +
+  geom_bar(position = "fill") +
+  labs(
+    title = "Proportion of Death and Hospitalisation by Education Level",
+    x = "Education Level",
+    y = "Proportion",
+    fill = "Died and Hospitalised"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+# Count the frequency of each occupation
+educationlevels_counts <- table(suicide_data$Education)
+print(educationlevels_counts)
+```
+
+```{r}
+# Count the frequency of each occupation
+month_counts <- table(suicide_data$Month)
+print(month_counts)
+```
+
+```{r}
+# Count the frequency of each occupation
+age_counts <- table(suicide_data$Age)
+print(age_counts)
+```
+
+```{r}
+hos <- table(suicide_data$Hospitalised)
+print(hos)
+```
+
+```{r}
+urban <- table(suicide_data$Urban)
+print(urban)
+```
+
+
+```{r}
+library(dplyr)
+
+# Filter dataset to include only farming and household occupations
+filtered_data <- suicide_data %>%
+  filter(Occupation %in% c("farming", "household"))
+
+# Check the size of the filtered dataset
+nrow(filtered_data)
+
+# View the distribution of Died and Hospitalised in the filtered dataset
+table(filtered_data$Died)
+table(filtered_data$Hospitalised)
+
+```
+
